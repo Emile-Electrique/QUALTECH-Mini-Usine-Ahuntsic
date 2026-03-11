@@ -1,0 +1,180 @@
+
+                                                //  V A R I A B L E S  //
+												
+TT-009								Int
+TT-010								Int
+TT-120								Int
+FS-001								Bool
+FS-002								Bool
+niveau_haut_R_pasto					Bool
+niveau_mid_R_pasto					Bool
+niveau_bas_R_pasto					Bool
+
+
+Output	
+P-001								Bool
+P-002								Bool
+P-004								Bool
+V-000								Bool
+V-001								Bool
+V-002								Bool
+V-010								Bool
+V-012								Bool
+V-013								Bool
+V-014								Bool
+V-015								Bool
+V-016								Bool
+V-100								Bool
+V-401								Bool
+
+
+	
+Static	
+etape_condition_legale				Int
+etape_remplissage_eau				Int
+timer_delais_pompe					TON_TIME
+timer_delais_valve					TON_TIME
+
+
+
+
+
+
+
+
+                                                //  S Y S T E M E   30  //
+
+
+
+// 7.1 Conditions Légale
+CASE #etape_condition_legale OF
+        
+    0:
+        
+        ;
+    1:
+        
+        ;
+        
+    2:
+        ;
+        
+    3:
+        ;
+        
+    4:
+        ;
+        
+        
+    ELSE
+        
+        ;
+        
+END_CASE;
+
+
+
+
+// 7.1 et 7.2 - Maintien du niveau
+
+
+CASE #etape_remplissage_eau OF
+        
+    0:
+        IF (#niveau_mid_R_pasto = 0) THEN
+            
+            #etape_remplissage_eau := 1;
+            
+        END_IF;
+        
+    1:
+        
+        #"V-401" := 1;
+        #"V-001" := 1;
+        #"V-100" := 1;
+        
+        IF #timer_delais_pompe.Q THEN
+            
+            #"P-004" := 1;
+            
+            IF #niveau_haut_R_pasto THEN
+                
+                #etape_remplissage_eau := 2;
+                
+            END_IF;
+            
+        END_IF;
+        
+        
+        
+    2:
+       
+            
+        #"P-004" := 0;
+        
+        IF #timer_delais_valve.Q THEN
+            
+            #"V-401" := 0;
+            #"V-001" := 0;
+            #"V-100" := 0;
+            
+            #etape_remplissage_eau := 0;
+            
+        END_IF;
+        
+        
+END_CASE;
+
+
+
+
+#timer_delais_pompe(IN:=(#etape_remplissage_eau = 1),
+                    PT:=T#2S);
+
+
+
+
+#timer_delais_valve(IN:=(#etape_remplissage_eau = 2),
+                    PT:=T#2S);
+
+
+
+
+
+
+
+// 7.4 Boucle de débit
+
+// PID magic goes here
+
+
+
+
+
+// 7.5 Boucle de température
+
+
+
+
+
+
+// 7.6 Recirculation d'urgence
+
+
+
+
+// 7.7 Sélection de Recette
+
+
+
+// 7.8 Sélection de la destination
+
+
+
+// 7.9 Séquence Principale
+
+
+
+
+
+
