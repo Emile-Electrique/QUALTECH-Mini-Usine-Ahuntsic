@@ -1,78 +1,78 @@
+
+                                                    //  V A R I A B L E S  //
+
+
 Input	
-boutton_depart	Bool
-boutton_arret	Bool
-LT-100	Int
-LT-200	Int
-LT-300	Int
-LT-400	Int
-FS-001	Bool
-FS-002	Bool
-FS-003	Bool
-FS-004	Bool
-niveau_R_100_min	Int
-niveau_R_100_max	Int
-niveau_R_200_min	Int
-niveau_R_200_max	Int
-niveau_R_300_min	Int
-niveau_R_300_max	Int
-niveau_R_400_min	Int
-niveau_R_400_max	Int
-timer_melangeur_on_time	Time
-timer_melangeur_off_time	Time
-timer_melangeur_hysterisis_time	Time
-remplissage_saveur_hmi	Bool
+boutton_depart						Bool
+boutton_arret						Bool
+LT-100								Int
+LT-200								Int
+LT-300								Int
+LT-400								Int
+FS-001								Bool
+FS-002								Bool
+FS-003								Bool
+FS-004								Bool
+niveau_R_100_min					Int
+niveau_R_100_max					Int
+niveau_R_200_min					Int
+niveau_R_200_max					Int
+niveau_R_300_min					Int
+niveau_R_300_max					Int
+niveau_R_400_min					Int
+niveau_R_400_max					Int
+timer_melangeur_on_time				Time
+timer_melangeur_off_time			Time
+timer_melangeur_hysterisis_time		Time
+remplissage_saveur_hmi				Bool
 niveau_de_remplissage_saveur_hmi	Int
-reservoir_actif_hmi	Int
-coude_reservoir_cru_ok_hmi	Bool
-volume_consigne_hmi	Int
-coude_injection_saveur_ok_hmi	Bool
-injection_de_saveur_depart_hmi	Bool
-nep_ok	Bool
+reservoir_actif_hmi					Int
+coude_reservoir_cru_ok_hmi			Bool
+volume_consigne_hmi					Int
+coude_injection_saveur_ok_hmi		Bool
+injection_de_saveur_depart_hmi		Bool
+nep_ok								Bool
+
+
+
 Output	
-P-001	Bool
-P-002	Bool
-P-003	Bool
-M-200	Bool
-V-000	Bool
-V-020	Bool
-V-100	Bool
-V-101	Bool
-V-102	Bool
-V-103	Bool
-V-200	Bool
-V-201	Bool
-V-202	Bool
-V-300	Bool
-V-301	Bool
-V-302	Bool
-V-400	Bool
-InOut	
+P-001								Bool
+P-002								Bool
+P-003								Bool
+M-200								Bool
+V-000								Bool
+V-020								Bool
+V-100								Bool
+V-101								Bool
+V-102								Bool
+V-103								Bool
+V-200								Bool
+V-201								Bool
+V-202								Bool
+V-300								Bool
+V-301								Bool
+V-302								Bool
+V-400								Bool
+
+
 	
 Static	
-timer_melangeur_on	TON_TIME
-timer_melangeur_off	TON_TIME
-timer_melangeur_hysterisis	TON_TIME
-etape_melangeur	Int
-melangeur_actif	Bool
-remplissage_saveur	Bool
-etape_remplissage_recette	Int
-niveau_reservoir_array	Array[0..4] of Int
-niveau_remplissage_consigne	Int
-etape_injection_saveur	Int
-injection_de_saveur_depart	Bool
-etape_lavage_R_recette1	Int
-etape_lavage_R_recette2	Int
-etape_lavage_R_saveur	Int
-etape_lavage_R_cru	Int
-etape_lavage_ligne_cru	Int
-
-
-
-
-
-
-
-
+timer_melangeur_on					TON_TIME
+timer_melangeur_off					TON_TIME
+timer_melangeur_hysterisis			TON_TIME
+etape_melangeur						Int
+melangeur_actif						Bool
+remplissage_saveur					Bool
+etape_remplissage_recette			Int
+niveau_reservoir_array				Array[0..4] of Int
+niveau_remplissage_consigne			Int
+etape_injection_saveur				Int
+injection_de_saveur_depart			Bool
+etape_lavage_R_recette1				Int
+etape_lavage_R_recette2				Int
+etape_lavage_R_saveur				Int
+etape_lavage_R_cru					Int
+etape_lavage_ligne_cru				Int
 
 
 
