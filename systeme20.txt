@@ -1,69 +1,70 @@
-
-
 Input	
-boutton_depart					Bool
-boutton_arret					Bool
-nep_ok							Bool
-demande_de_lavage				Bool
-interlock						Bool
-alarme_ok						Bool
-FS-002							Bool
-FS-120							Bool
-pontage_ok						Bool
-type_de_lavage_hmi				Int
-equipment_hmi					Int
-TT-120							Int
-niveau_reservoir_froid			Int
-niveau_reservoir_chaud			Int
-niveau_min_R_froid				Int
-niveau_max_R_froid				Int
-niveau_min_R_chaud				Int
-niveau_max_R_chaud				Int
-temperature_froid				Int
-temperature_chaud				Int
-temperature_min_R_froid			Int
-temperature_min_R_chaud			Int
-temperature_max_R_froid			Int
-temperature_max_R_chaud			Int
-temperature_consigne_R_froid	Int
-temperature_consigne_R_chaud	Int
-hyst_time						Time
-
-
-
+boutton_depart	Bool
+boutton_arret	Bool
+LT-100	Int
+LT-200	Int
+LT-300	Int
+LT-400	Int
+FS-001	Bool
+FS-002	Bool
+FS-003	Bool
+FS-004	Bool
+niveau_R_100_min	Int
+niveau_R_100_max	Int
+niveau_R_200_min	Int
+niveau_R_200_max	Int
+niveau_R_300_min	Int
+niveau_R_300_max	Int
+niveau_R_400_min	Int
+niveau_R_400_max	Int
+timer_melangeur_on_time	Time
+timer_melangeur_off_time	Time
+timer_melangeur_hysterisis_time	Time
+remplissage_saveur_hmi	Bool
+niveau_de_remplissage_saveur_hmi	Int
+reservoir_actif_hmi	Int
+coude_reservoir_cru_ok_hmi	Bool
+volume_consigne_hmi	Int
+coude_injection_saveur_ok_hmi	Bool
+injection_de_saveur_depart_hmi	Bool
+nep_ok	Bool
 Output	
-pompe_chauffage					Bool
-valve_chauffage					Bool
-valve_remplissage_R_froid		Bool
-valve_remplissage_R_chaud		Bool
-V-000							Bool
-V-002							Bool
-V-110							Bool
-V-111							Bool
-V-112							Bool
-V-120							Bool
-V-210							Bool
-V-211							Bool
-V-212							Bool
-P-002							Bool
-P-120							Bool
-
-	
+P-001	Bool
+P-002	Bool
+P-003	Bool
+M-200	Bool
+V-000	Bool
+V-020	Bool
+V-100	Bool
+V-101	Bool
+V-102	Bool
+V-103	Bool
+V-200	Bool
+V-201	Bool
+V-202	Bool
+V-300	Bool
+V-301	Bool
+V-302	Bool
+V-400	Bool
+InOut	
 	
 Static	
-V-111-static					Bool
-V-211-static					Bool
-etape							Int
-etat_equipment					Array[0..7] of Int
-type_de_lavage					Int
-equipment_actif					Int
-niveau_reservoir_actif			Int
-verif_pontage					Bool
-vanne_remplissage_R_chaud		Bool
-rincage_1_time					Time
-recirculation_1_time			Time
-rincage_2_time					Time
-fin_de_lavage_time				Time
+timer_melangeur_on	TON_TIME
+timer_melangeur_off	TON_TIME
+timer_melangeur_hysterisis	TON_TIME
+etape_melangeur	Int
+melangeur_actif	Bool
+remplissage_saveur	Bool
+etape_remplissage_recette	Int
+niveau_reservoir_array	Array[0..4] of Int
+niveau_remplissage_consigne	Int
+etape_injection_saveur	Int
+injection_de_saveur_depart	Bool
+etape_lavage_R_recette1	Int
+etape_lavage_R_recette2	Int
+etape_lavage_R_saveur	Int
+etape_lavage_R_cru	Int
+etape_lavage_ligne_cru	Int
 
 
 
@@ -73,178 +74,317 @@ fin_de_lavage_time				Time
 
 
 
-                                 //  S Y S T E M E   10  //
-                                 
-                                 
-// 5.1
-// 
-
-#"P-120" := #nep_ok AND
-            #demande_de_lavage AND
-            #niveau_reservoir_chaud >= #niveau_min_R_chaud;
-            
-            
-
-                                        
-"off_hyst_delay".TOF(IN := #temperature_chaud < #temperature_consigne_R_chaud,
-                      PT := #hyst_time);
-                                        
-#"V-120" := "off_hyst_delay".Q;
- 
 
 
-// 5.2
-// 
-
-// Valve de remplissage Reservoir chaud
-#"V-111-static" :=     (#niveau_reservoir_chaud < #niveau_min_R_chaud) OR
-(#"V-111-static" AND (#niveau_reservoir_chaud < #niveau_max_R_chaud));
-
-#"V-111" := #"V-111-static";
-                
-
-// Valve de remplissage Reservoir froid
-#"V-211-static" := (#niveau_reservoir_froid < #niveau_min_R_froid) OR
-(#"V-211-static" AND (#niveau_reservoir_froid < #niveau_max_R_froid));
-
-#"V-211" := #"V-211-static";
-            
-            
-// 5.3
-// 
 
 
-                            //  S E Q U E N C E   D E   L A V A G E  //
 
 
-CASE #etape OF
-                                      
-    0: // Init sequence
 
-        #"P-002" := 0;
-        #"V-000" := 0;
-        #"V-002" := 0;
-        #"V-110" := 0;
-        #"V-112" := 0;
-        #"V-212" := 0;
-        
-        
-        IF (#interlock) AND
-            (#alarme_ok) AND
-            (#equipment_hmi > 0) AND
-            (#type_de_lavage_hmi > 0) AND
-            (#etat_equipment[#equipment_hmi] = 2) AND
-            (#demande_de_lavage) THEN
-            
-            #equipment_actif := #equipment_hmi;
-            #type_de_lavage := #type_de_lavage_hmi;
-            #etat_equipment[#equipment_actif] := 3;
-            #etape := 1;
-            
-        END_IF;
 
-        
-    1: // verify pont
 
-        
-        IF (#pontage_ok) THEN
-            #verif_pontage := 0;
-            #etape := 2;
+
+
+
+                                                    //  S Y S T E M E   20  //
+
+
+
+// 6.1 Mélangeur
+
+#timer_melangeur_hysterisis(IN:=#melangeur_actif,
+                            PT:=#timer_melangeur_hysterisis_time);
+
+
+
+#timer_melangeur_on(IN:=(#etape_melangeur = 1),
+                    PT:=#timer_melangeur_on_time);
+
+
+#timer_melangeur_off(IN:=(#etape_melangeur = 2),
+                     PT:=#timer_melangeur_off_time);
+
+
+
+
+#melangeur_actif := (#"LT-200" > #niveau_R_200_min);
+
+CASE #etape_melangeur OF
+    0:  
+        IF #timer_melangeur_hysterisis.Q THEN
+            #etape_melangeur := 1;
+
         END_IF;
         
         
-        
-    2: // If a reservoir, empty it
-        CASE #equipment_actif OF
-                
-            1, 2, 3, 5:
-                
-                #"V-000" := 1;
-                
-                IF #niveau_reservoir_actif < #niveau_min_R_froid THEN
-                    
-                    #"V-000" := 0;
-                    #etape := 3;
-                    
-                END_IF;
-                
-            ELSE
-                
-                #etape := 3;
-               
-        END_CASE;
-        
-        
-        
-    3:  // RINCAGE 1
-        #"P-002" := 1;
-        #"V-000" := 0;
-        #"V-002" := 0;
-        #"V-212" := 1;
-        
-        IF "timer_rincage_1".Q THEN
+    1:  
+        IF #timer_melangeur_on.Q THEN
+            #etape_melangeur := 2;
             
-            IF (#type_de_lavage = 1) THEN
-                #etape := 5;
+        END_IF;
+        
+        IF (NOT #melangeur_actif) THEN
+            #etape_melangeur := 0;
+        END_IF;
+        
+    2:
+        IF #timer_melangeur_off.Q THEN
+            #etape_melangeur := 1;
+        END_IF;
+        
+        IF (NOT #melangeur_actif) THEN
+            #etape_melangeur := 0;
+        END_IF;
+        
+        
+    ELSE  
+        ;
+        
+END_CASE;
+
+
+
+
+
+// 6.2 Remplissage Réservoir Saveur
+
+
+IF #remplissage_saveur_hmi THEN
+    
+    #remplissage_saveur := 1;
+    
+END_IF;
+
+
+#niveau_reservoir_array[0] := 0;
+#niveau_reservoir_array[1] := #"LT-100";
+#niveau_reservoir_array[2] := #"LT-200";
+#niveau_reservoir_array[3] := #"LT-300";
+#niveau_reservoir_array[4] := #"LT-400";
+
+IF #remplissage_saveur THEN
+    
+    IF (#"LT-300" < #niveau_de_remplissage_saveur_hmi) THEN
+        #"V-300" := 1;
+    ELSE
+        #"V-300" := 0;
+        #remplissage_saveur := 0;
+    END_IF;
+    
+END_IF;
+
+
+
+
+// 6.3 Remplissage de produit au réservoir cru
+// 
+
+CASE #etape_remplissage_recette OF
+        
+    0:
+        IF (#niveau_remplissage_consigne >= #niveau_reservoir_array[#reservoir_actif_hmi]) THEN
+            IF #boutton_depart THEN
+                #etape_remplissage_recette := 1;
+            END_IF;
+            
+        END_IF;
+        
+        
+    1:
+        IF (#reservoir_actif_hmi > 0) THEN
+            
+            IF #coude_reservoir_cru_ok_hmi THEN
+                
+                #etape_remplissage_recette := 2;
                 
             END_IF;
             
-            #etape := 4;
+        END_IF;
+       
+        
+    2:
+        
+        CASE #reservoir_actif_hmi OF
+                
+                
+            1:  // Reservoir Recette 1
+                #"V-101" := 1;
+                #"P-001" := 1;
+                
+                IF (#"LT-100" >= #niveau_remplissage_consigne) THEN
+                    
+                #"V-101" := 0;
+                #"P-001" := 0;
+                
+                #etape_remplissage_recette := 0;
+                
+                END_IF;
+                
+                
+            2:  // Reservoir Recette 2
+                #"V-201" := 1;
+                #"P-001" := 1;
+                
+                IF (#"LT-200" >= #niveau_remplissage_consigne) THEN
+                    
+                #"V-201" := 0;
+                #"P-001" := 0;
+                    
+                #etape_remplissage_recette := 0;
+                    
+                END_IF;
+                
+            5:  // Reservoir Recette Camion
+                ;
+                
+            ELSE  
+                ;
+        END_CASE;
+        
+        
+    ELSE  
+        ;
+        
+END_CASE;
+
+
+
+
+
+// 6.4
+// 
+
+
+
+
+CASE #etape_injection_saveur OF
+        
+    0:
+        IF (#injection_de_saveur_depart_hmi) THEN
+            
+            //#injection_de_saveur_depart := 1; static variable
+            #etape_injection_saveur := 1;
+            
+        END_IF;
+        
+        
+    1:
+        
+        IF #coude_injection_saveur_ok_hmi THEN
+            
+            // calcul le volume
+            #etape_injection_saveur := 2;
+            
+        END_IF;
+        
+        
+    2:  // Remplissage du Reservoir de Saveur
+        
+        IF (#"LT-300" <= #niveau_R_300_max) THEN
+            
+            #"V-300" := 1;
+            
+        ELSE
+            
+            #"V-300" := 0;
+            #etape_injection_saveur := 3;
+            
+        END_IF;
+        
+        
+    3:  // manque e_i et e_ii
+        #etape_injection_saveur := 4;
+        
+    4:
+        #"V-301" := 0;
+        #"P-003" := 0;
+        
+    ELSE
+        ;
+END_CASE;
+
+
+
+
+
+// 6.5 Lavage Réservoir Recette 1
+// 
+
+
+
+
+
+CASE #etape_lavage_R_recette1 OF
+        
+    0:
+        IF #nep_ok THEN
+            
+            #etape_lavage_R_recette1 := 1;
+            
+        END_IF;
+        
+        
+    1:
+        
+        #"V-102" := 1;
+        #"P-002" := 1;
+        
+        IF (#"LT-100" = 0) AND (#"FS-002" = 0) THEN
+            
+            #"V-102" := 0;
+            #"P-002" := 0;
+            #etape_lavage_R_recette1 := 2;
             
         END_IF;
         
         
         
-    4:  // RECIRCULATION 1
-        #"V-212" := 0;
-        #"V-000" := 0;
+    2:
+        ;
         
-        #"V-112" := 1;
-        #"V-110" := 1;
+    3:
+        ;
         
-        IF "timer_recirculation_1".Q THEN
-            #etape := 5;
-            
-        END_IF;
+    ELSE
+        ;
+END_CASE;
+
+
+
+
+
+
+
+
+
+
+// 6.6 Lavage Réservoir Recette 2
+// 
+
+
+
+
+CASE #etape_lavage_R_recette2 OF
         
-    5:  // RINCAGE 2
+    0:
         
+        ;
+    1:
         
-        #"V-110" := 0;
-        #"V-112" := 0;
+        ;
         
-        #"V-000" := 1;
-        #"V-212" := 1;
+    2:
+        ;
         
-        IF "timer_rincage_2".Q THEN
-            
-            #etape := 6;
-            
-        END_IF;
+    3:
+        ;
         
-        
-        
-    6: // FIN DE LAVAGE & RESET
-        
-        #"P-002" := 0;
-        
-        #"V-000" := 0;
-        #"V-002" := 1;
-        #"V-212" := 0;
-        
-        IF "timer_fin_de_lavage".Q THEN
-            
-            #"V-002" := 0;
-            #etat_equipment[#equipment_actif] := 0; // Propre
-            #equipment_actif := 0;
-            #type_de_lavage := 0;
-            #etape := 0; // Reset
-            
-        END_IF;
+    4:
+        ;
         
         
+    ELSE
         
-    ELSE  // Statement section ELSE
         ;
         
 END_CASE;
@@ -254,45 +394,123 @@ END_CASE;
 
 
 
-                                        // T I M E R S //
-                                        
 
 
 
-// TIMER RINCAGE 1
-"timer_rincage_1".TON(IN := #etape = 3,
-                      PT := #rincage_1_time);
+
+// 6.7 Lavage Réservoir Saveur
+// 
 
 
 
-// TIMER RECIRCULATION 1
+
+CASE #etape_lavage_R_saveur OF
+        
+    0:
+        
+        ;
+    1:
+        
+        ;
+        
+    2:
+        ;
+        
+    3:
+        ;
+        
+    4:
+        ;
+        
+        
+    ELSE
+        
+        ;
+        
+END_CASE;
 
 
-"timer_recirculation_1".TONR(IN:=   ((#etape = 4) AND
-                             (#temperature_chaud > #temperature_consigne_R_chaud) AND
-                             ( #"FS-120" = 1) ),
-                             R:=(#etape = 0),
-                             PT:=#recirculation_1_time);
 
 
-                              
-                              
-// TIMER RINCAGE 2                             
-"timer_rincage_2".TON(IN:=(#etape = 5),
-                      PT:=#rincage_2_time);
 
 
-                              
-// TIMER FIN DE LAVAGE
-"timer_fin_de_lavage".TON  (IN := (#etape = 6),
-                            PT :=  #fin_de_lavage_time);
 
-                              
 
-                              
-                              
-                              
-                              
-                              
-                              
-                              
+
+
+// 6.8 Lavage Réservoir Cru
+// 
+
+
+
+
+CASE #etape_lavage_R_cru OF
+        
+    0:
+        
+        ;
+    1:
+        
+        ;
+        
+    2:
+        ;
+        
+    3:
+        ;
+        
+    4:
+        ;
+        
+        
+    ELSE
+        
+        ;
+        
+END_CASE;
+
+
+
+
+
+
+
+
+
+
+// 6.9 Lavage Ligne Cru
+// 
+
+
+
+
+CASE #etape_lavage_ligne_cru OF
+        
+    0:
+        
+        ;
+    1:
+        
+        ;
+        
+    2:
+        ;
+        
+    3:
+        ;
+        
+    4:
+        ;
+        
+        
+    ELSE
+        
+        ;
+        
+END_CASE;
+
+
+
+
+
+
