@@ -1,0 +1,298 @@
+
+
+Input	
+boutton_depart					Bool
+boutton_arret					Bool
+nep_ok							Bool
+demande_de_lavage				Bool
+interlock						Bool
+alarme_ok						Bool
+FS-002							Bool
+FS-120							Bool
+pontage_ok						Bool
+type_de_lavage_hmi				Int
+equipment_hmi					Int
+TT-120							Int
+niveau_reservoir_froid			Int
+niveau_reservoir_chaud			Int
+niveau_min_R_froid				Int
+niveau_max_R_froid				Int
+niveau_min_R_chaud				Int
+niveau_max_R_chaud				Int
+temperature_froid				Int
+temperature_chaud				Int
+temperature_min_R_froid			Int
+temperature_min_R_chaud			Int
+temperature_max_R_froid			Int
+temperature_max_R_chaud			Int
+temperature_consigne_R_froid	Int
+temperature_consigne_R_chaud	Int
+hyst_time						Time
+
+
+
+Output	
+pompe_chauffage					Bool
+valve_chauffage					Bool
+valve_remplissage_R_froid		Bool
+valve_remplissage_R_chaud		Bool
+V-000							Bool
+V-002							Bool
+V-110							Bool
+V-111							Bool
+V-112							Bool
+V-120							Bool
+V-210							Bool
+V-211							Bool
+V-212							Bool
+P-002							Bool
+P-120							Bool
+
+	
+	
+Static	
+V-111-static					Bool
+V-211-static					Bool
+etape							Int
+etat_equipment					Array[0..7] of Int
+type_de_lavage					Int
+equipment_actif					Int
+niveau_reservoir_actif			Int
+verif_pontage					Bool
+vanne_remplissage_R_chaud		Bool
+rincage_1_time					Time
+recirculation_1_time			Time
+rincage_2_time					Time
+fin_de_lavage_time				Time
+
+
+
+
+
+
+
+
+
+                                 //  S Y S T E M E   10  //
+                                 
+                                 
+// 5.1
+// 
+
+#"P-120" := #nep_ok AND
+            #demande_de_lavage AND
+            #niveau_reservoir_chaud >= #niveau_min_R_chaud;
+            
+            
+
+                                        
+"off_hyst_delay".TOF(IN := #temperature_chaud < #temperature_consigne_R_chaud,
+                      PT := #hyst_time);
+                                        
+#"V-120" := "off_hyst_delay".Q;
+ 
+
+
+// 5.2
+// 
+
+// Valve de remplissage Reservoir chaud
+#"V-111-static" :=     (#niveau_reservoir_chaud < #niveau_min_R_chaud) OR
+(#"V-111-static" AND (#niveau_reservoir_chaud < #niveau_max_R_chaud));
+
+#"V-111" := #"V-111-static";
+                
+
+// Valve de remplissage Reservoir froid
+#"V-211-static" := (#niveau_reservoir_froid < #niveau_min_R_froid) OR
+(#"V-211-static" AND (#niveau_reservoir_froid < #niveau_max_R_froid));
+
+#"V-211" := #"V-211-static";
+            
+            
+// 5.3
+// 
+
+
+                            //  S E Q U E N C E   D E   L A V A G E  //
+
+
+CASE #etape OF
+                                      
+    0: // Init sequence
+
+        #"P-002" := 0;
+        #"V-000" := 0;
+        #"V-002" := 0;
+        #"V-110" := 0;
+        #"V-112" := 0;
+        #"V-212" := 0;
+        
+        
+        IF (#interlock) AND
+            (#alarme_ok) AND
+            (#equipment_hmi > 0) AND
+            (#type_de_lavage_hmi > 0) AND
+            (#etat_equipment[#equipment_hmi] = 2) AND
+            (#demande_de_lavage) THEN
+            
+            #equipment_actif := #equipment_hmi;
+            #type_de_lavage := #type_de_lavage_hmi;
+            #etat_equipment[#equipment_actif] := 3;
+            #etape := 1;
+            
+        END_IF;
+
+        
+    1: // verify pont
+
+        
+        IF (#pontage_ok) THEN
+            #verif_pontage := 0;
+            #etape := 2;
+        END_IF;
+        
+        
+        
+    2: // If a reservoir, empty it
+        CASE #equipment_actif OF
+                
+            1, 2, 3, 5:
+                
+                #"V-000" := 1;
+                
+                IF #niveau_reservoir_actif < #niveau_min_R_froid THEN
+                    
+                    #"V-000" := 0;
+                    #etape := 3;
+                    
+                END_IF;
+                
+            ELSE
+                
+                #etape := 3;
+               
+        END_CASE;
+        
+        
+        
+    3:  // RINCAGE 1
+        #"P-002" := 1;
+        #"V-000" := 0;
+        #"V-002" := 0;
+        #"V-212" := 1;
+        
+        IF "timer_rincage_1".Q THEN
+            
+            IF (#type_de_lavage = 1) THEN
+                #etape := 5;
+                
+            END_IF;
+            
+            #etape := 4;
+            
+        END_IF;
+        
+        
+        
+    4:  // RECIRCULATION 1
+        #"V-212" := 0;
+        #"V-000" := 0;
+        
+        #"V-112" := 1;
+        #"V-110" := 1;
+        
+        IF "timer_recirculation_1".Q THEN
+            #etape := 5;
+            
+        END_IF;
+        
+    5:  // RINCAGE 2
+        
+        
+        #"V-110" := 0;
+        #"V-112" := 0;
+        
+        #"V-000" := 1;
+        #"V-212" := 1;
+        
+        IF "timer_rincage_2".Q THEN
+            
+            #etape := 6;
+            
+        END_IF;
+        
+        
+        
+    6: // FIN DE LAVAGE & RESET
+        
+        #"P-002" := 0;
+        
+        #"V-000" := 0;
+        #"V-002" := 1;
+        #"V-212" := 0;
+        
+        IF "timer_fin_de_lavage".Q THEN
+            
+            #"V-002" := 0;
+            #etat_equipment[#equipment_actif] := 0; // Propre
+            #equipment_actif := 0;
+            #type_de_lavage := 0;
+            #etape := 0; // Reset
+            
+        END_IF;
+        
+        
+        
+    ELSE  // Statement section ELSE
+        ;
+        
+END_CASE;
+
+
+
+
+
+
+                                        // T I M E R S //
+                                        
+
+
+
+// TIMER RINCAGE 1
+"timer_rincage_1".TON(IN := #etape = 3,
+                      PT := #rincage_1_time);
+
+
+
+// TIMER RECIRCULATION 1
+
+
+"timer_recirculation_1".TONR(IN:=   ((#etape = 4) AND
+                             (#temperature_chaud > #temperature_consigne_R_chaud) AND
+                             ( #"FS-120" = 1) ),
+                             R:=(#etape = 0),
+                             PT:=#recirculation_1_time);
+
+
+                              
+                              
+// TIMER RINCAGE 2                             
+"timer_rincage_2".TON(IN:=(#etape = 5),
+                      PT:=#rincage_2_time);
+
+
+                              
+// TIMER FIN DE LAVAGE
+"timer_fin_de_lavage".TON  (IN := (#etape = 6),
+                            PT :=  #fin_de_lavage_time);
+
+                              
+
+                              
+                              
+                              
+                              
+                              
+                              
+                              
